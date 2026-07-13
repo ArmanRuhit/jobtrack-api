@@ -1,0 +1,100 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  runtime      = "nodejs"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ApplicationStatus {
+  APPLIED
+  SCREEN
+  ONSITE
+  OFFER
+  REJECTED
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  passwordHash String
+  name         String
+  role         Role          @default(USER)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  applications Application[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Company {
+  id        String        @id @default(uuid())
+  name      String        @unique
+  website   String?
+  industry  String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  applications Application[]
+
+  @@map("companies")
+}
+
+model Application {
+  id        String            @id @default(uuid())
+  role      String
+  status    ApplicationStatus @default(APPLIED)
+  salaryMin Int?
+  salaryMax Int?
+  notes     String?
+  source    String?
+  appliedAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId String
+  company   Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  events    ApplicationEvent[]
+
+  @@index([userId, status])
+  @@index([companyId])
+  @@map("applications")
+}
+
+model ApplicationEvent {
+  id            String            @id @default(uuid())
+  applicationId String
+  application   Application       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  fromStatus    ApplicationStatus?
+  toStatus      ApplicationStatus
+  note          String?
+  createdAt     DateTime          @default(now())
+
+  @@index([applicationId])
+  @@map("application_events")
+}

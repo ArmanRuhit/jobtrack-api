@@ -28,6 +28,8 @@ RUN apk add --no-cache dumb-init && \
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=build     /app/dist         ./dist
 COPY --from=build     /app/prisma       ./prisma
+# The dashboard is served by the API (ServeStaticModule resolves ../public from dist).
+COPY --from=build     /app/public       ./public
 COPY prisma.config.ts package.json ./
 
 USER app

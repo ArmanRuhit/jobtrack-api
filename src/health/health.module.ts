@@ -7,7 +7,10 @@ import { HealthController } from './health.controller';
 @Module({
   // Registering the queue here injects the *same* connection the workers use,
   // so the probe fails when the real queue connection is broken.
-  imports: [TerminusModule, BullModule.registerQueue({ name: REMINDERS_QUEUE })],
+  imports: [
+    TerminusModule,
+    BullModule.registerQueue({ name: REMINDERS_QUEUE }),
+  ],
   controllers: [HealthController],
 })
 export class HealthModule {}

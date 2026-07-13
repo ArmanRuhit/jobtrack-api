@@ -3,6 +3,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'node:path';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import type { RedisOptions } from 'ioredis';
 import { ApplicationsModule } from './applications/applications.module';
@@ -88,6 +90,19 @@ function buildRedisConnection(config: ConfigService): RedisOptions {
     }),
 
     ScheduleModule.forRoot(),
+
+    // The dashboard ships with the API: one container, one URL, no CORS.
+    // `exclude` keeps the static handler off the API surface, so an unknown
+    // /applications/* path still 404s as JSON instead of returning index.html.
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'),
+      exclude: [
+        '/auth/{*path}',
+        '/companies/{*path}',
+        '/applications/{*path}',
+        '/health/{*path}',
+      ],
+    }),
 
     PrismaModule,
     AuthModule,

@@ -25,7 +25,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
         ms,
       );
     }),
-  ]).finally(() => clearTimeout(timer)) as Promise<T>;
+  ]).finally(() => clearTimeout(timer));
 }
 
 @ApiTags('health')

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JobTrack — application pipeline</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="mark">JT</span>
+        <div>
+          <h1>JobTrack</h1>
+          <p class="sub">Job application pipeline</p>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <a class="ghost" href="/docs" target="_blank" rel="noopener">API docs</a>
+        <span id="health" class="pill pill-muted" title="GET /health/ready">checking…</span>
+        <button id="logout" class="ghost" hidden>Sign out</button>
+      </div>
+    </header>
+
+    <!-- ── login ───────────────────────────────────────────── -->
+    <main id="login-view" class="centered">
+      <form id="login-form" class="card auth">
+        <h2>Sign in</h2>
+        <p class="muted">Demo credentials are pre-filled.</p>
+
+        <label for="email">Email</label>
+        <input id="email" type="email" value="demo@jobtrack.dev" required autocomplete="username" />
+
+        <label for="password">Password</label>
+        <input id="password" type="password" value="DemoPassw0rd!" required autocomplete="current-password" />
+
+        <button id="login-btn" type="submit" class="primary">Sign in</button>
+        <p id="login-error" class="error" hidden></p>
+      </form>
+    </main>
+
+    <!-- ── dashboard ───────────────────────────────────────── -->
+    <main id="app-view" hidden>
+      <section class="stats" id="stats"></section>
+
+      <section class="toolbar">
+        <h2>Pipeline</h2>
+        <button id="new-btn" class="primary small">Track an application</button>
+      </section>
+
+      <section class="board" id="board"></section>
+    </main>
+
+    <!-- ── new-application dialog ──────────────────────────── -->
+    <dialog id="new-dialog" class="card">
+      <form id="new-form" method="dialog">
+        <h2>Track an application</h2>
+
+        <label for="new-company">Company</label>
+        <select id="new-company" required></select>
+
+        <label for="new-role">Role</label>
+        <input id="new-role" required placeholder="Senior Backend Engineer" />
+
+        <div class="row">
+          <div>
+            <label for="new-min">Salary min</label>
+            <input id="new-min" type="number" min="0" placeholder="90000" />
+          </div>
+          <div>
+            <label for="new-max">Salary max</label>
+            <input id="new-max" type="number" min="0" placeholder="200000" />
+          </div>
+        </div>
+
+        <label for="new-notes">Notes</label>
+        <textarea id="new-notes" rows="2" placeholder="Where did you find it?"></textarea>
+
+        <p id="new-error" class="error" hidden></p>
+
+        <menu>
+          <button type="button" class="ghost" id="new-cancel">Cancel</button>
+          <button type="submit" class="primary">Add</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- ── detail drawer ───────────────────────────────────── -->
+    <aside id="drawer" class="drawer" hidden>
+      <div class="drawer-head">
+        <div>
+          <h2 id="d-role"></h2>
+          <p id="d-company" class="muted"></p>
+        </div>
+        <button id="d-close" class="ghost">✕</button>
+      </div>
+
+      <div class="drawer-body">
+        <div class="field"><span class="muted">Status</span><span id="d-status"></span></div>
+        <div class="field"><span class="muted">Applied</span><span id="d-applied"></span></div>
+        <div class="field"><span class="muted">Salary</span><span id="d-salary"></span></div>
+        <div class="field"><span class="muted">Source</span><span id="d-source"></span></div>
+
+        <div id="d-notes-wrap" class="notes" hidden>
+          <span class="muted">Notes</span>
+          <p id="d-notes"></p>
+        </div>
+
+        <h3>Advance status</h3>
+        <p class="muted small-text">
+          Only legal transitions are offered — the API rejects the rest with a 400.
+        </p>
+        <div id="d-actions" class="actions"></div>
+        <p id="d-error" class="error" hidden></p>
+
+        <h3>Audit trail</h3>
+        <p class="muted small-text">
+          Every status change is written with its event in one transaction.
+        </p>
+        <ol id="d-events" class="timeline"></ol>
+      </div>
+    </aside>
+    <div id="scrim" class="scrim" hidden></div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

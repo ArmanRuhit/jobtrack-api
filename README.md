@@ -56,9 +56,27 @@ docker compose up -d          # Postgres :5433, Redis :6380
 cp .env.example .env
 npm ci
 npx prisma migrate dev        # create the schema
-npm run db:seed               # demo@jobtrack.dev / S3curePassw0rd!
+npm run db:seed               # see demo login below
 npm run start:dev             # http://localhost:3000/docs
 ```
+
+### Demo login
+
+The seed creates a demo candidate with a realistic pipeline — 6 companies, 6 applications
+across every status, each carrying the audit trail of how it got there.
+
+```
+email:    demo@jobtrack.dev
+password: DemoPassw0rd!
+```
+
+Log in at `/docs` (**Authorize** → paste the `accessToken` from `POST /auth/login`), then
+try `GET /applications/stats`, or `GET /applications/:id` on the ONSITE one to see the
+status history.
+
+An `ADMIN` user (who can read every user's applications and delete companies) is only
+created when `SEED_ADMIN_PASSWORD` is set in the environment — never as a literal in this
+repo.
 
 ### Tests
 

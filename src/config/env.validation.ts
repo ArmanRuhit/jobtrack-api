@@ -21,6 +21,16 @@ export const envSchema = z.object({
       message: 'must start with redis:// or rediss://',
     })
     .optional(),
+  // Managed Redis often terminates TLS with a self-signed cert (Coolify does).
+  // Strict verification then fails with SELF_SIGNED_CERT_IN_CHAIN and ioredis
+  // reconnect-loops forever. Prefer supplying the CA; fall back to disabling
+  // verification only when the connection is on a private network.
+  REDIS_CA_CERT: z.string().optional(),
+  REDIS_TLS_REJECT_UNAUTHORIZED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true'),
+
   REDIS_HOST: z.string().min(1).default('localhost'),
   REDIS_PORT: z.coerce.number().int().positive().default(6379),
 

@@ -17,6 +17,9 @@ import { HealthModule } from './health/health.module';
 import { JobsModule } from './jobs/jobs.module';
 import { PrismaModule } from './prisma/prisma.module';
 
+const isIpLiteral = (host: string): boolean =>
+  /^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.includes(':');
+
 /**
  * BullMQ needs `maxRetriesPerRequest: null` — with a finite value ioredis aborts
  * commands during a reconnect, which surfaces as silently dropped jobs.
@@ -33,8 +36,23 @@ function buildRedisConnection(config: ConfigService): RedisOptions {
       port: Number(parsed.port || 6379),
       username: parsed.username || undefined,
       password: parsed.password || undefined,
-      // rediss:// means TLS.
-      ...(parsed.protocol === 'rediss:' ? { tls: {} } : {}),
+      // rediss:// means TLS. Managed providers frequently present a self-signed
+      // cert, so verification is configurable — supply the CA where you can, and
+      // only disable verification on a trusted private network.
+      ...(parsed.protocol === 'rediss:'
+        ? {
+            tls: {
+              // SNI takes a hostname, never an IP literal.
+              ...(isIpLiteral(parsed.hostname)
+                ? {}
+                : { servername: parsed.hostname }),
+              ca: config.get<string>('REDIS_CA_CERT'),
+              rejectUnauthorized: config.get<boolean>(
+                'REDIS_TLS_REJECT_UNAUTHORIZED',
+              ),
+            },
+          }
+        : {}),
     };
   }
 

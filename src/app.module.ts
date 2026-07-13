@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import type { RedisOptions } from 'ioredis';
 import { ApplicationsModule } from './applications/applications.module';
 import { AuthModule } from './auth/auth.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -15,6 +16,34 @@ import { validateEnv } from './config/env.validation';
 import { HealthModule } from './health/health.module';
 import { JobsModule } from './jobs/jobs.module';
 import { PrismaModule } from './prisma/prisma.module';
+
+/**
+ * BullMQ needs `maxRetriesPerRequest: null` — with a finite value ioredis aborts
+ * commands during a reconnect, which surfaces as silently dropped jobs.
+ */
+function buildRedisConnection(config: ConfigService): RedisOptions {
+  const base: RedisOptions = { maxRetriesPerRequest: null };
+  const url = config.get<string>('REDIS_URL');
+
+  if (url) {
+    const parsed = new URL(url);
+    return {
+      ...base,
+      host: parsed.hostname,
+      port: Number(parsed.port || 6379),
+      username: parsed.username || undefined,
+      password: parsed.password || undefined,
+      // rediss:// means TLS.
+      ...(parsed.protocol === 'rediss:' ? { tls: {} } : {}),
+    };
+  }
+
+  return {
+    ...base,
+    host: config.getOrThrow<string>('REDIS_HOST'),
+    port: config.getOrThrow<number>('REDIS_PORT'),
+  };
+}
 
 @Module({
   imports: [
@@ -36,10 +65,7 @@ import { PrismaModule } from './prisma/prisma.module';
     BullModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        connection: {
-          host: config.getOrThrow<string>('REDIS_HOST'),
-          port: config.getOrThrow<number>('REDIS_PORT'),
-        },
+        connection: buildRedisConnection(config),
       }),
     }),
 

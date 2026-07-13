@@ -12,6 +12,15 @@ export const envSchema = z.object({
 
   DATABASE_URL: z.string().url(),
 
+  // Managed Redis (Coolify, Upstash, Railway…) hands you a single URL that already
+  // carries credentials and the TLS scheme (rediss://). It wins when present; the
+  // host/port pair below is the local docker-compose fallback.
+  REDIS_URL: z
+    .string()
+    .refine((v) => /^rediss?:\/\//.test(v), {
+      message: 'must start with redis:// or rediss://',
+    })
+    .optional(),
   REDIS_HOST: z.string().min(1).default('localhost'),
   REDIS_PORT: z.coerce.number().int().positive().default(6379),
 

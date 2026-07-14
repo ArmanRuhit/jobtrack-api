@@ -6,7 +6,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'node:path';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import type { RedisOptions } from 'ioredis';
+// BullMQ's RedisOptions is ioredis's plus `url`, which it parses for us.
+import type { RedisOptions } from 'bullmq';
 import { ApplicationsModule } from './applications/applications.module';
 import { AuthModule } from './auth/auth.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -30,38 +31,36 @@ function buildRedisConnection(config: ConfigService): RedisOptions {
   const base: RedisOptions = { maxRetriesPerRequest: null };
   const url = config.get<string>('REDIS_URL');
 
-  if (url) {
-    const parsed = new URL(url);
+  if (!url) {
     return {
       ...base,
-      host: parsed.hostname,
-      port: Number(parsed.port || 6379),
-      username: parsed.username || undefined,
-      password: parsed.password || undefined,
-      // rediss:// means TLS. Managed providers frequently present a self-signed
-      // cert, so verification is configurable — supply the CA where you can, and
-      // only disable verification on a trusted private network.
-      ...(parsed.protocol === 'rediss:'
-        ? {
-            tls: {
-              // SNI takes a hostname, never an IP literal.
-              ...(isIpLiteral(parsed.hostname)
-                ? {}
-                : { servername: parsed.hostname }),
-              ca: config.get<string>('REDIS_CA_CERT'),
-              rejectUnauthorized: config.get<boolean>(
-                'REDIS_TLS_REJECT_UNAUTHORIZED',
-              ),
-            },
-          }
-        : {}),
+      host: config.getOrThrow<string>('REDIS_HOST'),
+      port: config.getOrThrow<number>('REDIS_PORT'),
     };
   }
 
+  // BullMQ hands `url` to `new Redis(url, rest)`, so ioredis parses the host,
+  // port and credentials — only the TLS overrides are ours to supply.
+  const { protocol, hostname } = new URL(url);
+
   return {
     ...base,
-    host: config.getOrThrow<string>('REDIS_HOST'),
-    port: config.getOrThrow<number>('REDIS_PORT'),
+    url,
+    // rediss:// means TLS. Managed providers frequently present a self-signed
+    // cert, so verification is configurable — supply the CA where you can, and
+    // only disable verification on a trusted private network.
+    ...(protocol === 'rediss:'
+      ? {
+          tls: {
+            // SNI takes a hostname, never an IP literal.
+            ...(isIpLiteral(hostname) ? {} : { servername: hostname }),
+            ca: config.get<string>('REDIS_CA_CERT'),
+            rejectUnauthorized: config.get<boolean>(
+              'REDIS_TLS_REJECT_UNAUTHORIZED',
+            ),
+          },
+        }
+      : {}),
   };
 }
 

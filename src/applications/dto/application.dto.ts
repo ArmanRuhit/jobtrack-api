@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Max,
   Min,
   MinLength,
 } from 'class-validator';
@@ -75,10 +76,12 @@ export class QueryApplicationsDto {
   @Min(1)
   page = 1;
 
-  @ApiPropertyOptional({ default: 20 })
+  // Capped: an uncapped `take` lets one request ask for the whole table.
+  @ApiPropertyOptional({ default: 20, maximum: 100 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(100)
   limit = 20;
 }

@@ -23,10 +23,6 @@ export interface AuthUser {
 
 /** Pulls the authenticated principal off the request — @AuthenticationPrincipal's cousin. */
 export const CurrentUser = createParamDecorator(
-  (data: keyof AuthUser | undefined, ctx: ExecutionContext) => {
-    const req = ctx.switchToHttp().getRequest<Request & { user?: AuthUser }>();
-    const user = req.user;
-    if (!user) return undefined;
-    return data ? user[data] : user;
-  },
+  (_data: unknown, ctx: ExecutionContext) =>
+    ctx.switchToHttp().getRequest<Request & { user?: AuthUser }>().user,
 );

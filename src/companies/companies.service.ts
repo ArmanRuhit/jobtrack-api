@@ -27,13 +27,13 @@ export class CompaniesService {
     return company;
   }
 
-  async update(id: string, dto: UpdateCompanyDto): Promise<Company> {
-    await this.findOne(id);
+  // A missing id raises Prisma P2025, which AllExceptionsFilter maps to 404 —
+  // so neither of these needs a preceding existence check.
+  update(id: string, dto: UpdateCompanyDto): Promise<Company> {
     return this.prisma.company.update({ where: { id }, data: dto });
   }
 
   async remove(id: string): Promise<void> {
-    await this.findOne(id);
     await this.prisma.company.delete({ where: { id } });
   }
 }

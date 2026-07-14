@@ -6,6 +6,8 @@
     "dist",
     "**/*spec.ts",
     "prisma.config.ts",
-    "prisma/**"
+    "prisma/**",
+    "vite.config.ts",
+    "web/**"
   ]
 }

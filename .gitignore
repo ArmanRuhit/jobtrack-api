@@ -5,3 +5,6 @@ dist
 src/generated
 coverage
 *.log
+
+# built by vite from web/
+public
